@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KinetFlashFind · Instant Full-Disk File Search for Mac</title>
+<meta name="description" content="KinetFlashFind is an instant full-disk file search tool for Mac. It builds its own index with no Spotlight dependency, finds hidden and system files, and keeps all data on your machine.">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+  /* ============ tokens ============ */
+  :root {
+    --bg: #FAFAF9;
+    --ink: #18181B;
+    --ink-2: #52525B;
+    --line: #E4E4E7;
+    --accent: #1D5FFF;
+    --accent-deep: #0F3EB8;
+    --card: #FFFFFF;
+    --radius-card: 16px;
+    --radius-btn: 999px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ============ nav ============ */
+  nav {
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+  }
+  .brand { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
+  .brand span { color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 24px; }
+  .nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--ink-2); }
+  .nav-links a:hover { color: var(--ink); }
+  .lang-switch { display: flex; align-items: center; gap: 2px; }
+  .lang-switch button {
+    border: none; background: transparent; cursor: pointer;
+    font-family: inherit; font-size: 12.5px; color: var(--ink-2);
+    padding: 5px 9px; border-radius: 999px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .lang-switch button:hover { color: var(--ink); }
+  .lang-switch button.active { color: var(--accent); background: rgba(29, 95, 255, 0.08); font-weight: 600; }
+
+  /* ============ hero ============ */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 48px;
+    align-items: center;
+    padding: 72px 0 88px;
+  }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  }
+  h1 {
+    font-size: clamp(38px, 5vw, 60px);
+    line-height: 1.08; letter-spacing: -0.03em; font-weight: 800;
+    margin-bottom: 20px;
+  }
+  .hero .sub {
+    font-size: 18px; color: var(--ink-2); max-width: 42ch; margin-bottom: 32px;
+  }
+  .cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 26px; border-radius: var(--radius-btn);
+    font-size: 15px; font-weight: 600;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-deep); }
+  .btn-ghost { border: 1px solid var(--line); color: var(--ink); background: var(--card); }
+  .btn-ghost:hover { border-color: var(--ink-2); }
+  .hero-visual {
+    background: linear-gradient(160deg, #EEF3FF, #F7F8FA);
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 48px;
+  }
+  .hero-visual img { width: 200px; height: 200px; border-radius: 22%; box-shadow: 0 24px 60px rgba(29, 95, 255, 0.22); }
+
+  /* ============ bento ============ */
+  .section { padding: 72px 0; }
+  .section-title { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 10px; }
+  .section-sub { color: var(--ink-2); font-size: 16px; margin-bottom: 36px; max-width: 56ch; }
+  .bento {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: minmax(150px, auto);
+    gap: 16px;
+  }
+  .cell {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 26px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    transition: transform 0.2s ease;
+  }
+  .cell:hover { transform: translateY(-3px); }
+  .cell h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .cell p { font-size: 14px; color: var(--ink-2); }
+  .cell-wide { grid-column: span 2; }
+  .cell-gradient {
+    background: linear-gradient(135deg, #1D5FFF, #6C3BFF);
+    border: none; color: #fff;
+  }
+  .cell-gradient p { color: rgba(255,255,255,0.85); }
+  .cell-gradient h3 { font-size: 22px; }
+  .cell-dark { background: #18181B; border-color: #18181B; color: #fff; }
+  .cell-dark .stat { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; }
+  .cell-dark p { color: #A1A1AA; }
+
+  /* ============ privacy ============ */
+  .privacy-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-top: 8px;
+  }
+  .p-item { display: flex; gap: 14px; align-items: flex-start; }
+  .p-item i { font-size: 26px; color: var(--accent); }
+  .p-item h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .p-item p { font-size: 13.5px; color: var(--ink-2); }
+
+  /* ============ faq ============ */
+  details {
+    border-bottom: 1px solid var(--line);
+    padding: 20px 0;
+  }
+  summary {
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    list-style: none; display: flex; justify-content: space-between; align-items: center;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary i { transition: transform 0.2s ease; color: var(--ink-2); }
+  details[open] summary i { transform: rotate(180deg); }
+  details p { padding-top: 12px; color: var(--ink-2); font-size: 14.5px; max-width: 68ch; }
+  details code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px;
+    background: #F0F0F1; padding: 2px 7px; border-radius: 6px;
+  }
+
+  /* ============ footer ============ */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 36px 0 48px; margin-top: 40px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13.5px; color: var(--ink-2); flex-wrap: wrap; gap: 12px;
+  }
+  footer .f-links { display: flex; gap: 24px; }
+  footer a:hover { color: var(--ink); }
+
+  /* ============ motion ============ */
+  .fade-up { animation: fadeUp 0.6s ease both; }
+  .fade-up-2 { animation: fadeUp 0.6s 0.12s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .fade-up, .fade-up-2 { animation: none; }
+    .cell:hover, .btn:active { transform: none; }
+  }
+
+  /* ============ responsive ============ */
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding: 48px 0 56px; }
+    .hero-visual { padding: 32px; order: -1; }
+    .hero-visual img { width: 120px; height: 120px; }
+    .bento { grid-template-columns: 1fr; }
+    .cell-wide { grid-column: span 1; }
+    .privacy-strip { grid-template-columns: 1fr; }
+    .nav-links { gap: 16px; }
+    .nav-right { gap: 10px; }
+  }
+  @media (max-width: 600px) {
+    nav { height: auto; padding: 12px 0; flex-wrap: wrap; }
+    .nav-links { display: none; }  /* 锚点在页脚仍有入口 */
+    .lang-switch { margin-left: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <a class="brand" href="#">Kinet<span>FlashFind</span></a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="#features" data-i18n="nav.features">Features</a>
+        <a href="#faq" data-i18n="nav.faq">FAQ</a>
+        <a href="privacy.html" data-i18n="nav.privacy">Privacy Policy</a>
+      </div>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="ja">日本語</button>
+        <button type="button" data-lang="zh-Hans">简体中文</button>
+        <button type="button" data-lang="zh-Hant">繁體中文</button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="fade-up">
+      <div class="eyebrow" data-i18n="hero.eyebrow">Instant File Search for Mac</div>
+      <h1 data-i18n="hero.h1">Full-disk file search,<br>faster than a progress bar.</h1>
+      <p class="sub" data-i18n="hero.sub">Builds its own index — no Spotlight needed. Hidden files, system files: results appear as you type.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#"><i class="ph ph-app-store-logo"></i><span data-i18n="hero.ctaDownload">Download on the App Store</span></a>
+        <a class="btn btn-ghost" href="#features" data-i18n="hero.ctaHow">See how it works</a>
+      </div>
+    </div>
+    <div class="hero-visual fade-up-2">
+      <img src="assets/icon1024.png" alt="KinetFlashFind app icon" data-i18n-alt="hero.imgAlt">
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <h2 class="section-title" data-i18n="feat.title">Built for the moment you can’t find your file</h2>
+    <p class="section-sub" data-i18n="feat.sub">The missing piece Everything users miss most when they move to Mac. The index lives on your own computer — searching only your own files.</p>
+    <div class="bento">
+      <div class="cell cell-wide cell-gradient">
+        <div>
+          <h3 data-i18n="cell1.title">Self-built index engine</h3>
+          <p data-i18n="cell1.body">Concurrent scanning + real-time FSEvents monitoring — no Spotlight dependency. Broken system indexes and endless re-indexing simply can’t happen here.</p>
+        </div>
+      </div>
+      <div class="cell cell-dark">
+        <div class="stat">6,673,497</div>
+        <p data-i18n="stat1.caption">entries in a single full-disk index — measured</p>
+      </div>
+      <div class="cell cell-dark">
+        <div class="stat">0.87s</div>
+        <p data-i18n="stat2.caption">worst search latency during a rebuild — measured</p>
+      </div>
+      <div class="cell">
+        <div>
+          <h3 data-i18n="cell3.title">See Spotlight’s blind spots</h3>
+          <p data-i18n="cell3.body">Dot-hidden files and deep system directories are indexed too. Multi-keyword AND search, type filters, sort by size and date.</p>
+        </div>
+      </div>
+      <div class="cell">
+        <div>
+          <h3 data-i18n="cell4.title">Find it, use it</h3>
+          <p data-i18n="cell4.body">Double-click to open; right-click to reveal in Finder or copy the full path. Search as you type — no Enter needed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title" data-i18n="priv.title">Privacy is the default</h2>
+    <p class="section-sub" data-i18n="priv.sub">No account, no cloud, no analytics. The index database is a local file inside the app’s sandbox container.</p>
+    <div class="privacy-strip">
+      <div class="p-item">
+        <i class="ph ph-wifi-slash"></i>
+        <div>
+          <h4 data-i18n="p1.title">Fully offline</h4>
+          <p data-i18n="p1.body">No networking code at all — search and indexing happen entirely on your machine.</p>
+        </div>
+      </div>
+      <div class="p-item">
+        <i class="ph ph-hard-drives"></i>
+        <div>
+          <h4 data-i18n="p2.title">Data never leaves your device</h4>
+          <p data-i18n="p2.body">The index is stored inside the app’s sandbox container and is deleted with it on uninstall.</p>
+        </div>
+      </div>
+      <div class="p-item">
+        <i class="ph ph-shield-check"></i>
+        <div>
+          <h4 data-i18n="p3.title">Optional, revocable permissions</h4>
+          <p data-i18n="p3.body">Works without Full Disk Access — just manually add the folders you want indexed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <h2 class="section-title" data-i18n="faq.title">FAQ</h2>
+    <details open>
+      <summary><span data-i18n="q1">Why can’t I find files in some folders?</span><i class="ph ph-caret-down"></i></summary>
+      <p data-i18n="a1">macOS privacy protection restricts folders like <code>Documents</code>, <code>Downloads</code> and <code>Desktop</code>. Click “Grant Access” in the app, allow Full Disk Access, then click “Re-check” to index every file. Or skip the permission: click “Add Folder” and pick locations manually.</p>
+    </details>
+    <details>
+      <summary><span data-i18n="q2">Does indexing drain the battery?</span><i class="ph ph-caret-down"></i></summary>
+      <p data-i18n="a2">The first full-disk index is a one-time cost. Afterwards, incremental updates only touch changed files, so day-to-day overhead is minimal. A 256MB write cap protects the index store — it will never slow your system down.</p>
+    </details>
+    <details>
+      <summary><span data-i18n="q3">Will my file list be uploaded?</span><i class="ph ph-caret-down"></i></summary>
+      <p data-i18n="a3">Never. The app contains no networking or analytics code; the index exists only inside your Mac’s sandbox container. See the <a href="privacy.html">Privacy Policy</a> for details.</p>
+    </details>
+  </section>
+
+  <footer>
+    <div data-i18n="footer.copy">© 2026 Kinet · KinetFlashFind for Mac</div>
+    <div class="f-links">
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#faq" data-i18n="nav.faq">FAQ</a>
+      <a href="privacy.html" data-i18n="nav.privacy">Privacy Policy</a>
+      <a href="mailto:support@example.com" data-i18n="footer.contact">Contact us</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============ 四语言字典(默认英语) ============
+  var I18N = {
+    'en': {
+      title: 'KinetFlashFind · Instant Full-Disk File Search for Mac',
+      desc: 'KinetFlashFind is an instant full-disk file search tool for Mac. It builds its own index with no Spotlight dependency, finds hidden and system files, and keeps all data on your machine.',
+      font: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif',
+      'nav.features': 'Features',
+      'nav.faq': 'FAQ',
+      'nav.privacy': 'Privacy Policy',
+      'hero.eyebrow': 'Instant File Search for Mac',
+      'hero.h1': 'Full-disk file search,<br>faster than a progress bar.',
+      'hero.sub': 'Builds its own index — no Spotlight needed. Hidden files, system files: results appear as you type.',
+      'hero.ctaDownload': 'Download on the App Store',
+      'hero.ctaHow': 'See how it works',
+      'hero.imgAlt': 'KinetFlashFind app icon',
+      'feat.title': 'Built for the moment you can’t find your file',
+      'feat.sub': 'The missing piece Everything users miss most when they move to Mac. The index lives on your own computer — searching only your own files.',
+      'cell1.title': 'Self-built index engine',
+      'cell1.body': 'Concurrent scanning + real-time FSEvents monitoring — no Spotlight dependency. Broken system indexes and endless re-indexing simply can’t happen here.',
+      'stat1.caption': 'entries in a single full-disk index — measured',
+      'stat2.caption': 'worst search latency during a rebuild — measured',
+      'cell3.title': 'See Spotlight’s blind spots',
+      'cell3.body': 'Dot-hidden files and deep system directories are indexed too. Multi-keyword AND search, type filters, sort by size and date.',
+      'cell4.title': 'Find it, use it',
+      'cell4.body': 'Double-click to open; right-click to reveal in Finder or copy the full path. Search as you type — no Enter needed.',
+      'priv.title': 'Privacy is the default',
+      'priv.sub': 'No account, no cloud, no analytics. The index database is a local file inside the app’s sandbox container.',
+      'p1.title': 'Fully offline',
+      'p1.body': 'No networking code at all — search and indexing happen entirely on your machine.',
+      'p2.title': 'Data never leaves your device',
+      'p2.body': 'The index is stored inside the app’s sandbox container and is deleted with it on uninstall.',
+      'p3.title': 'Optional, revocable permissions',
+      'p3.body': 'Works without Full Disk Access — just manually add the folders you want indexed.',
+      'faq.title': 'FAQ',
+      'q1': 'Why can’t I find files in some folders?',
+      'a1': 'macOS privacy protection restricts folders like <code>Documents</code>, <code>Downloads</code> and <code>Desktop</code>. Click “Grant Access” in the app, allow Full Disk Access, then click “Re-check” to index every file. Or skip the permission: click “Add Folder” and pick locations manually.',
+      'q2': 'Does indexing drain the battery?',
+      'a2': 'The first full-disk index is a one-time cost. Afterwards, incremental updates only touch changed files, so day-to-day overhead is minimal. A 256MB write cap protects the index store — it will never slow your system down.',
+      'q3': 'Will my file list be uploaded?',
+      'a3': 'Never. The app contains no networking or analytics code; the index exists only inside your Mac’s sandbox container. See the <a href="privacy.html">Privacy Policy</a> for details.',
+      'footer.copy': '© 2026 Kinet · KinetFlashFind for Mac',
+      'footer.contact': 'Contact us'
+    },
+    'ja': {
+      title: 'KinetFlashFind · Macの全ディスク即時ファイル検索',
+      desc: 'KinetFlashFindはMac向けの全ディスク即時ファイル検索ツール。独自インデックスでSpotlightに依存せず、隠しファイルやシステムファイルも検索可能。すべてのデータはローカルにのみ保存されます。',
+      font: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", sans-serif',
+      'nav.features': '機能',
+      'nav.faq': 'よくある質問',
+      'nav.privacy': 'プライバシーポリシー',
+      'hero.eyebrow': 'Mac向け即時ファイル検索',
+      'hero.h1': '全ディスクのファイル検索、<br>速すぎてプログレスバーが不要。',
+      'hero.sub': '独自インデックスでSpotlightに依存しない。隠しファイルもシステムファイルも、入力した瞬間に結果。',
+      'hero.ctaDownload': 'App Storeからダウンロード',
+      'hero.ctaHow': '仕組みを見る',
+      'hero.imgAlt': 'KinetFlashFind アプリアイコン',
+      'feat.title': '「ファイルが見つからない」その瞬間のために',
+      'feat.sub': 'WindowsのEverythingユーザーがMacで最も恋しく思うあのピース。インデックスはあなたのMacの中だけ。検索するのはあなた自身のファイルです。',
+      'cell1.title': '独自インデックスエンジン',
+      'cell1.body': '並列スキャン+FSEventsリアルタイム監視でSpotlightに非依存。システムインデックスの破損や再構築失敗といった厄介事は、そもそも起きません。',
+      'stat1.caption': '1回の全ディスク索引で登録した項目数(実測)',
+      'stat2.caption': '再構築中の検索最悪レイテンシ(実測)',
+      'cell3.title': 'Spotlightの盲点が見える',
+      'cell3.body': 'ドット始まりの隠しファイルも、深い階層のシステムディレクトリも丸ごと収録。複数キーワードAND検索、種別フィルタ、サイズや日付での並べ替えに対応。',
+      'cell4.title': '見つけたらすぐ使える',
+      'cell4.body': 'ダブルクリックで開く、右クリックでFinderに表示・フルパスをコピー。入力即検索、Enter不要。',
+      'priv.title': 'プライバシーはデフォルト',
+      'priv.sub': 'アカウントなし、クラウドなし、解析なし。インデックスデータベースはサンドボックスコンテナ内のローカルファイル。',
+      'p1.title': '完全オフライン',
+      'p1.body': '通信コードを一切含まず、検索もインデックス作成もすべてローカルで完結します。',
+      'p2.title': 'データは端末の外へ出ない',
+      'p2.body': 'インデックスはアプリのサンドボックス内に保存され、アンインストール時にコンテナごと削除されます。',
+      'p3.title': '権限は任意・取り消し可',
+      'p3.body': '「フルディスクアクセス」を許可しなくても使えます。索引したいフォルダを手動で追加するだけ。',
+      'faq.title': 'よくある質問',
+      'q1': '一部のフォルダが検索できないのはなぜ?',
+      'a1': 'macOSのプライバシー保護により、<code>書類</code>・<code>ダウンロード</code>・<code>デスクトップ</code>などは制限されます。アプリ内の「アクセスを許可」からフルディスクアクセスを許可し、「再チェック」を押せば全ファイルを索引化できます。許可しない場合は「フォルダを追加」で手動指定できます。',
+      'q2': 'インデックス作成は電力を大量に消費する?',
+      'a2': '初回の全ディスク索引は一時限りのコスト。以降は差分更新で変更のあったファイルだけを処理するため、通常時の負荷は極小です。インデックスには256MBの書き込み上限保護があり、システムを遅くすることはありません。',
+      'q3': 'ファイル一覧はアップロードされる?',
+      'a3': '決してアップロードされません。アプリは通信・解析コードを一切含まず、インデックスはあなたのMacのサンドボックスコンテナ内だけに存在します。詳しくは<a href="privacy.html">プライバシーポリシー</a>をご覧ください。',
+      'footer.copy': '© 2026 Kinet · KinetFlashFind for Mac',
+      'footer.contact': 'お問い合わせ'
+    },
+    'zh-Hans': {
+      title: 'KinetFlashFind · Mac 全盘即时文件搜索',
+      desc: 'KinetFlashFind 是一款 Mac 全盘即时文件搜索工具。自建索引,不依赖 Spotlight,能搜到隐藏文件与系统文件,所有数据仅存本机。',
+      font: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
+      'nav.features': '功能',
+      'nav.faq': '常见问题',
+      'nav.privacy': '隐私政策',
+      'hero.eyebrow': 'Mac 即时文件搜索',
+      'hero.h1': '全盘文件搜索,<br>快到没有进度条。',
+      'hero.sub': '自建索引,不依赖 Spotlight。隐藏文件、系统文件,输入即出结果。',
+      'hero.ctaDownload': '从 App Store 下载',
+      'hero.ctaHow': '了解工作原理',
+      'hero.imgAlt': 'KinetFlashFind 应用图标',
+      'feat.title': '为「找不到文件」的瞬间而生',
+      'feat.sub': 'Windows 上 Everything 用户来到 Mac 最想念的那块拼图。索引存在你自己的电脑里,搜的是你自己的文件。',
+      'cell1.title': '自建索引引擎',
+      'cell1.body': '并发扫描 + FSEvents 实时监听,不依赖 Spotlight。系统索引损坏、反复重建失败这些老问题,从根上不存在。',
+      'stat1.caption': '单次全盘索引条目,实测',
+      'stat2.caption': '重建期间搜索最坏延迟,实测',
+      'cell3.title': '看见 Spotlight 的盲区',
+      'cell3.body': '点开头的隐藏文件、深层系统目录,一并收录。支持多关键词 AND、按类型过滤、按大小与时间排序。',
+      'cell4.title': '搜到即用',
+      'cell4.body': '双击打开,右键在 Finder 中显示、拷贝完整路径。即输即搜,无需回车。',
+      'priv.title': '隐私是默认设置',
+      'priv.sub': '没有账号,没有云端,没有分析统计。索引数据库是沙盒容器里的一个本地文件。',
+      'p1.title': '完全离线',
+      'p1.body': '没有任何联网代码,搜索与索引全部在本机完成。',
+      'p2.title': '数据不出设备',
+      'p2.body': '索引存储在应用沙盒容器内,卸载即随容器删除。',
+      'p3.title': '权限可选可撤销',
+      'p3.body': '不授权「完全磁盘访问」也能用,手动添加要索引的文件夹即可。',
+      'faq.title': '常见问题',
+      'q1': '为什么有些文件夹搜不到?',
+      'a1': 'macOS 的隐私保护限制了 <code>文稿</code>、<code>下载</code>、<code>桌面</code> 等目录。在应用内点击「去授权」,允许完全磁盘访问后点「重新检查」,即可索引全部文件。不授权也没关系:点「添加文件夹」手动选择要索引的位置。',
+      'q2': '索引会消耗很多电吗?',
+      'a2': '首次全盘索引是一次性成本,完成后增量更新只处理发生变化的文件,日常占用极低。索引库有 256MB 的写入上限保护,不会拖慢系统。',
+      'q3': '我的文件列表会被上传吗?',
+      'a3': '永远不会。应用不包含任何联网与分析代码,索引只存在于你 Mac 的沙盒容器中,详情见<a href="privacy.html">隐私政策</a>。',
+      'footer.copy': '© 2026 Kinet · KinetFlashFind for Mac',
+      'footer.contact': '联系我们'
+    },
+    'zh-Hant': {
+      title: 'KinetFlashFind · Mac 全碟即時檔案搜尋',
+      desc: 'KinetFlashFind 是一款 Mac 全碟即時檔案搜尋工具。自建索引,不依賴 Spotlight,能搜到隱藏檔案與系統檔案,所有資料僅存本機。',
+      font: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Hiragino Sans CNS", "Microsoft JhengHei", sans-serif',
+      'nav.features': '功能',
+      'nav.faq': '常見問題',
+      'nav.privacy': '隱私權政策',
+      'hero.eyebrow': 'Mac 即時檔案搜尋',
+      'hero.h1': '全碟檔案搜尋,<br>快到沒有進度條。',
+      'hero.sub': '自建索引,不依賴 Spotlight。隱藏檔案、系統檔案,輸入即出結果。',
+      'hero.ctaDownload': '從 App Store 下載',
+      'hero.ctaHow': '了解運作原理',
+      'hero.imgAlt': 'KinetFlashFind 應用程式圖示',
+      'feat.title': '為「找不到檔案」的瞬間而生',
+      'feat.sub': 'Windows 上 Everything 使用者來到 Mac 最想念的那塊拼圖。索引存在你自己的電腦裡,搜的是你自己的檔案。',
+      'cell1.title': '自建索引引擎',
+      'cell1.body': '並行掃描 + FSEvents 即時監聽,不依賴 Spotlight。系統索引損壞、反覆重建失敗這些老問題,從根上不存在。',
+      'stat1.caption': '單次全碟索引項目,實測',
+      'stat2.caption': '重建期間搜尋最壞延遲,實測',
+      'cell3.title': '看見 Spotlight 的盲區',
+      'cell3.body': '點開頭的隱藏檔案、深層系統目錄,一併收錄。支援多關鍵字 AND、依類型篩選、依大小與時間排序。',
+      'cell4.title': '搜到即用',
+      'cell4.body': '雙擊開啟,右鍵在 Finder 中顯示、拷貝完整路徑。即輸即搜,無需按 Enter。',
+      'priv.title': '隱私是預設設定',
+      'priv.sub': '沒有帳號,沒有雲端,沒有分析統計。索引資料庫是沙盒容器裡的一個本機檔案。',
+      'p1.title': '完全離線',
+      'p1.body': '沒有任何連網程式碼,搜尋與索引全部在本機完成。',
+      'p2.title': '資料不出裝置',
+      'p2.body': '索引儲存在應用程式沙盒容器內,解除安裝即隨容器刪除。',
+      'p3.title': '權限可選可撤銷',
+      'p3.body': '不授權「完整磁碟存取權限」也能用,手動加入要索引的資料夾即可。',
+      'faq.title': '常見問題',
+      'q1': '為什麼有些資料夾搜不到?',
+      'a1': 'macOS 的隱私保護限制了 <code>文稿</code>、<code>下載</code>、<code>桌面</code> 等目錄。在應用程式內點擊「前往授權」,允許完整磁碟存取權限後點「重新檢查」,即可索引全部檔案。不授權也沒關係:點「加入資料夾」手動選擇要索引的位置。',
+      'q2': '索引會消耗很多電嗎?',
+      'a2': '首次全碟索引是一次性成本,完成後增量更新只處理發生變化的檔案,日常佔用極低。索引庫有 256MB 的寫入上限保護,不會拖慢系統。',
+      'q3': '我的檔案清單會被上傳嗎?',
+      'a3': '永遠不會。應用程式不包含任何連網與分析程式碼,索引只存在於你 Mac 的沙盒容器中,詳情見<a href="privacy.html">隱私權政策</a>。',
+      'footer.copy': '© 2026 Kinet · KinetFlashFind for Mac',
+      'footer.contact': '聯絡我們'
+    }
+  };
+
+  var STORAGE_KEY = 'kff-lang';
+
+  function setLang(lang, persist) {
+    var dict = I18N[lang];
+    if (!dict) { lang = 'en'; dict = I18N.en; }
+
+    document.documentElement.lang = lang;
+    document.title = dict.title;
+    var meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', dict.desc);
+    document.body.style.fontFamily = dict.font;
+
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) {
+      var key = nodes[i].getAttribute('data-i18n');
+      if (dict[key] !== undefined) nodes[i].innerHTML = dict[key];
+    }
+    var altNodes = document.querySelectorAll('[data-i18n-alt]');
+    for (var j = 0; j < altNodes.length; j++) {
+      var akey = altNodes[j].getAttribute('data-i18n-alt');
+      if (dict[akey] !== undefined) altNodes[j].setAttribute('alt', dict[akey]);
+    }
+
+    var btns = document.querySelectorAll('.lang-switch button');
+    for (var k = 0; k < btns.length; k++) {
+      btns[k].classList.toggle('active', btns[k].getAttribute('data-lang') === lang);
+    }
+
+    if (persist) {
+      try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) { /* 隐私模式等场景忽略 */ }
+    }
+  }
+
+  // 切换器事件
+  var switcher = document.querySelectorAll('.lang-switch button');
+  for (var i = 0; i < switcher.length; i++) {
+    switcher[i].addEventListener('click', function () {
+      setLang(this.getAttribute('data-lang'), true);
+    });
+  }
+
+  // 初始语言:优先用户上次选择,否则默认英语
+  var saved = null;
+  try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { /* 忽略 */ }
+  setLang(saved && I18N[saved] ? saved : 'en', false);
+})();
+</script>
+</body>
+</html>
